@@ -1,7 +1,6 @@
-import { AIImage } from "@/components/AIImage"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/select"
+import { AIImage } from "@/components/AIImage";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function ReservationPage() {
   return (
@@ -16,14 +15,17 @@ export default function ReservationPage() {
             height={400}
             className="rounded-lg shadow-lg mb-6"
           />
-          <h2 className="text-2xl font-semibold mb-4">Profitez d'une soirée inoubliable</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            Profitez d'une soirée inoubliable
+          </h2>
           <p className="mb-4">
-            Réservez votre table chez Bella Italia et préparez-vous à vivre une expérience culinaire authentique. Notre
-            équipe est impatiente de vous accueillir et de vous faire découvrir les saveurs de l'Italie.
+            Réservez votre table chez Bella Italia et préparez-vous à vivre une
+            expérience culinaire authentique. Notre équipe est impatiente de
+            vous accueillir et de vous faire découvrir les saveurs de l'Italie.
           </p>
           <p className="mb-2">
-            Pour toute demande spéciale ou pour les groupes de plus de 8 personnes, veuillez nous contacter directement
-            :
+            Pour toute demande spéciale ou pour les groupes de plus de 8
+            personnes, veuillez nous contacter directement :
           </p>
           <p className="font-semibold">01 23 45 67 89</p>
         </div>
@@ -45,25 +47,30 @@ export default function ReservationPage() {
               <label htmlFor="phone" className="block mb-2 font-medium">
                 Téléphone
               </label>
-              <Input id="phone" type="tel" placeholder="Votre numéro de téléphone" />
+              <div className="flex">
+                <select className="border border-gray-300 rounded-l-lg p-2 bg-gray-100">
+                  <option value="+33">🇫🇷 +33</option>
+                  <option value="+32">🇧🇪 +32</option>
+                  <option value="+41">🇨🇭 +41</option>
+                  <option value="+49">🇩🇪 +49</option>
+                </select>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Votre numéro"
+                  className="rounded-r-lg"
+                />
+              </div>
             </div>
             <div>
-              <label htmlFor="date" className="block mb-2 font-medium">
-                Date
-              </label>
-              <Input id="date" type="date" />
-            </div>
-            <div>
-              <label htmlFor="time" className="block mb-2 font-medium">
-                Heure
-              </label>
-              <Input id="time" type="time" />
-            </div>
-            <div>
-              <label htmlFor="guests" className="block mb-2 font-medium">
+              <label htmlFor="persons" className="block mb-2 font-medium">
                 Nombre de personnes
               </label>
-              <Select id="guests">
+              <select
+                id="persons"
+                className="w-full border border-gray-300 rounded-lg p-2 bg-gray-100"
+              >
+                <option value="">Sélectionnez</option>
                 <option value="1">1 personne</option>
                 <option value="2">2 personnes</option>
                 <option value="3">3 personnes</option>
@@ -72,15 +79,15 @@ export default function ReservationPage() {
                 <option value="6">6 personnes</option>
                 <option value="7">7 personnes</option>
                 <option value="8">8 personnes</option>
-              </Select>
+                <option value="plus">Plus de 8 personnes</option>
+              </select>
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full bg-blue-600 text-white">
               Réserver
             </Button>
           </form>
         </div>
       </div>
     </div>
-  )
+  );
 }
-
