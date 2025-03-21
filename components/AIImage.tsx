@@ -26,8 +26,8 @@ export function AIImage({ prompt, alt, width, height, className }: AIImageProps)
         const contrastColor = Number.parseInt(randomColor, 16) > 0xffffff / 2 ? "000" : "fff"
 
         // Create a colorful placeholder image URL
-        const placeholderUrl = `https://via.placeholder.com/${width}x${height}/${randomColor}/${contrastColor}?text=${encodeURIComponent(prompt)}`
-
+        //const placeholderUrl = `https://via.placeholder.com/${width}x${height}/${randomColor}/${contrastColor}?text=${encodeURIComponent(prompt)}`
+          const placeholderUrl = `https://i.pinimg.com/736x/06/38/67/063867cf8d1d37714dc6513e26198941.jpg`
         setImageSrc(placeholderUrl)
         setIsLoading(false)
       } catch (err) {

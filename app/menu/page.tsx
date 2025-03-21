@@ -42,21 +42,21 @@ export default function MenuPage() {
       nom: "Tiramisu",
       description: "Biscuits imbibés d'espresso superposés avec de la crème de mascarpone.",
       prix: 8.95,
-      imageUrl: "https://i.pinimg.com/736x/a2/26/07/a226076c1498919907ff9596acfb0874.jpg",
+      imageUrl: "https://i.pinimg.com/736x/f2/5f/14/f25f148f1075c1a2bfbe058c178402e7.jpg",
     },
     {
       id: 2,
       nom: "Panna Cotta",
       description: "Crème cuite italienne servie avec un coulis de fruits rouges.",
       prix: 6.95,
-      imageUrl: "https://i.pinimg.com/736x/3b/3a/3b/3b3a3b3a3b3a3b3a3b3a3b3a3b3a3b3a.jpg",
+      imageUrl: "https://i.pinimg.com/736x/33/04/5d/33045d34012feff40248a3e48332b0bc.jpg",
     },
     {
       id: 3,
       nom: "Cannoli Sicilien",
       description: "Pâtisserie croustillante farcie de ricotta sucrée et de pépites de chocolat.",
       prix: 7.95,
-      imageUrl: "https://i.pinimg.com/736x/4c/4d/4e/4c4d4e4c4d4e4c4d4e4c4d4e4c4d4e4c.jpg",
+      imageUrl: "https://i.pinimg.com/736x/37/f0/81/37f0819fd43c0d991b61d44f4e4af415.jpg",
     },
   ];
 
