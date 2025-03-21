@@ -7,7 +7,18 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
+
       <section className="relative flex items-center justify-center h-[70vh] text-center">
+
+      <img
+  src="https://i.pinimg.com/736x/2c/36/74/2c3674e8a07ca8fd214854df0491e215.jpg"
+  alt="Table italienne élégante"
+  width={1600}
+  height={800}
+  className="h-48 w-full object-cover"
+/>
+
+        {/*
         <AIImage
           prompt="Une table italienne élégante avec des pâtes, du vin et une vue sur la campagne toscane"
           alt="Table italienne élégante"
@@ -15,6 +26,7 @@ export default function Home() {
           height={800}
           className="absolute inset-0 object-cover w-full h-full"
         />
+       */}
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="relative z-10 container mx-auto px-4 py-32 text-white">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">Cuisine Italienne Authentique</h1>
