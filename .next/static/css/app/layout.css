@@ -1422,6 +1422,12 @@ video {
 .bg-transparent {
   background-color: transparent;
 }
+.bg-cover {
+  background-size: cover;
+}
+.bg-center {
+  background-position: center;
+}
 .fill-current {
   fill: currentColor;
 }

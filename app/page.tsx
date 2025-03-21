@@ -3,52 +3,43 @@ import { Button } from "@/components/ui/button"
 import { ChevronRight, UtensilsCrossed, Clock, Award } from "lucide-react"
 import { AIImage } from "@/components/AIImage"
 
+function HeroSection() {
+  return (
+    <section
+      className="relative flex items-center justify-center h-[70vh] text-center bg-cover bg-center"
+      style={{
+        backgroundImage: "url('https://i.pinimg.com/736x/2c/36/74/2c3674e8a07ca8fd214854df0491e215.jpg')",
+      }}
+    >
+      <div className="absolute inset-0 bg-black/50"></div>
+      <div className="relative z-10 container mx-auto px-4 py-32 text-white">
+        <h1 className="text-4xl md:text-6xl font-bold mb-4">Cuisine Italienne Authentique</h1>
+        <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">
+          Découvrez le goût de l'Italie dans chaque bouchée. Recettes familiales transmises de génération en génération.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button asChild size="lg" className="text-lg">
+            <Link href="/menu">Voir Notre Menu</Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="text-lg bg-transparent border-white text-white hover:bg-white hover:text-black"
+          >
+            <Link href="/contact">Réserver une Table</Link>
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-
-      <section className="relative flex items-center justify-center h-[70vh] text-center">
-
-      <img
-  src="https://i.pinimg.com/736x/2c/36/74/2c3674e8a07ca8fd214854df0491e215.jpg"
-  alt="Table italienne élégante"
-  width={1600}
-  height={800}
-  className="h-48 w-full object-cover"
-/>
-
-        {/*
-        <AIImage
-          prompt="Une table italienne élégante avec des pâtes, du vin et une vue sur la campagne toscane"
-          alt="Table italienne élégante"
-          width={1600}
-          height={800}
-          className="absolute inset-0 object-cover w-full h-full"
-        />
-       */}
-        <div className="absolute inset-0 bg-black/50"></div>
-        <div className="relative z-10 container mx-auto px-4 py-32 text-white">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">Cuisine Italienne Authentique</h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">
-            Découvrez le goût de l'Italie dans chaque bouchée. Recettes familiales transmises de génération en
-            génération.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="text-lg">
-              <Link href="/menu">Voir Notre Menu</Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="text-lg bg-transparent border-white text-white hover:bg-white hover:text-black"
-            >
-              <Link href="/contact">Réserver une Table</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* Features Section */}
       <section className="py-16 bg-muted">
