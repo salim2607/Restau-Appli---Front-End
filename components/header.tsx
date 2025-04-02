@@ -41,6 +41,10 @@ export function Header() {
             <Link href="/reservation" className="text-sm font-medium transition-colors hover:text-primary">
               Réserver
             </Link>
+            {/* Login Button */}
+            <Button asChild variant="outline" size="sm" className="text-primary border-primary hover:bg-primary hover:text-white">
+              <Link href="/login">Login</Link>
+            </Button>
             <ModeToggle />
           </nav>
 
@@ -85,6 +89,14 @@ export function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               Réserver
+            </Link>
+            {/* Login Button for Mobile */}
+            <Link
+              href="/login"
+              className="text-sm font-medium transition-colors hover:text-primary"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Login
             </Link>
           </nav>
         </div>
