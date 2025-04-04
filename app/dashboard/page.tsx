@@ -1,7 +1,35 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, ClipboardList, DollarSign, Users } from "lucide-react";
+import { CalendarDays, ClipboardList, DollarSign, Users, Bell } from "lucide-react";
+import { Badge } from "@/components/ui/badge"; // Assurez-vous que ce composant est correctement importé
+
+const reservations = [
+  {
+    id: "RES-001",
+    name: "Martin Dupont",
+    date: "2023-11-15",
+    time: "19:30",
+    guests: 4,
+    status: "Confirmé",
+  },
+  {
+    id: "RES-002",
+    name: "Sophie Laurent",
+    date: "2023-11-15",
+    time: "20:00",
+    guests: 2,
+    status: "En attente",
+  },
+  {
+    id: "RES-003",
+    name: "Jean Petit",
+    date: "2023-11-16",
+    time: "12:30",
+    guests: 6,
+    status: "Confirmé",
+  },
+];
 
 export default function DashboardPage() {
   return (
@@ -128,6 +156,33 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="pl-2">
               <div>Graphique analytique (statique)</div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Notifications */}
+        <TabsContent value="notifications" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Notifications de réservations</CardTitle>
+              <CardDescription>Les réservations récentes ou en attente.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-4">
+                {reservations.map((reservation) => (
+                  <li key={reservation.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">{reservation.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {reservation.date} à {reservation.time} - {reservation.guests} personnes
+                      </p>
+                    </div>
+                    <Badge variant={reservation.status === "Confirmé" ? "default" : "outline"}>
+                      {reservation.status}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
             </CardContent>
           </Card>
         </TabsContent>
