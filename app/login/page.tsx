@@ -22,8 +22,6 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // Ancien code pour la requête API (commenté)
-      /*
       const response = await fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
         headers: {
@@ -43,18 +41,6 @@ export default function LoginPage() {
 
       // Rediriger vers le tableau de bord
       router.push("/dashboard");
-      */
-
-      // Nouveau code pour tester avec un login en dur
-      const hardcodedEmail = "admin@resto.com";
-      const hardcodedPassword = "adminpass";
-
-      if (email === hardcodedEmail && password === hardcodedPassword) {
-        console.log("Connexion réussie avec les identifiants en dur.");
-        router.push("/dashboard"); // Redirection vers le tableau de bord
-      } else {
-        throw new Error("Identifiants incorrects. Veuillez réessayer.");
-      }
     } catch (err: any) {
       setError(err.message || "Une erreur est survenue.");
     } finally {
