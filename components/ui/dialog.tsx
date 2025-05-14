@@ -44,24 +44,31 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
+      <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+        <X className="h-4 w-4" />
+      </DialogClose>
     </DialogPrimitive.Content>
   </DialogPortal>
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
-const DialogHeader = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Header>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Header>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Header ref={ref} className={cn("flex items-center justify-between", className)} {...props} />
-));
-DialogHeader.displayName = DialogPrimitive.Header.displayName;
+// Création d'un composant personnalisé pour DialogHeader
+const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)} {...props} />
+);
+DialogHeader.displayName = "DialogHeader";
+
+// Création d'un composant personnalisé pour DialogFooter
+const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex items-center justify-end gap-x-4", className)} {...props} />
+);
+DialogFooter.displayName = "DialogFooter";
 
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title ref={ref} className={cn("text-lg font-semibold", className)} {...props} />
+  <DialogPrimitive.Title ref={ref} className={cn("text-lg font-semibold leading-none tracking-tight", className)} {...props} />
 ));
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
 
@@ -72,14 +79,6 @@ const DialogDescription = React.forwardRef<
   <DialogPrimitive.Description ref={ref} className={cn("text-sm text-muted-foreground", className)} {...props} />
 ));
 DialogDescription.displayName = DialogPrimitive.Description.displayName;
-
-const DialogFooter = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Footer>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Footer>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Footer ref={ref} className={cn("flex items-center justify-end gap-x-4", className)} {...props} />
-));
-DialogFooter.displayName = DialogPrimitive.Footer.displayName;
 
 const DialogCloseButton = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Close>,
