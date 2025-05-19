@@ -212,7 +212,7 @@ export default function ReservationPage() {
                 <option value="plus">Plus de 8 personnes</option>
               </select>
             </div>
-            <div>
+            {/* <div>
               <label htmlFor="numeroTable" className="block mb-2 font-medium">
                 Numéro de table
               </label>
@@ -222,7 +222,7 @@ export default function ReservationPage() {
                 placeholder="Numéro de table"
                 required
               />
-            </div>
+            </div> */}
             <Button type="submit" className="w-full bg-blue-600 text-white">
               Réserver
             </Button>
