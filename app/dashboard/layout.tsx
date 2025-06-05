@@ -1,6 +1,6 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
-import { LayoutDashboard, Users, Calendar, ShoppingCart, Settings, MenuIcon } from "lucide-react"
+import { LayoutDashboard, Users, Calendar, ShoppingCart, Settings, MenuIcon, Map } from "lucide-react"
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -9,7 +9,7 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50">
-        {/* Header */}
+      {/* Header */}
 
       <div className="flex">
         {/* Sidebar */}
@@ -56,6 +56,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 >
                   <MenuIcon className="h-5 w-5 mr-3" />
                   Prendre une commande
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/dashboard/floor-plan"
+                  className="flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100"
+                >
+                  <Map className="h-5 w-5 mr-3" />
+                  Plan de salle
                 </Link>
               </li>
               <li>

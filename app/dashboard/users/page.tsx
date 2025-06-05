@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { Search, Edit, Trash2, UserPlus, Check, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Search, Edit, Trash2, UserPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -16,9 +16,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Toaster } from "@/components/ui/toaster";
+import { useToast } from "@/components/ui/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,146 +30,78 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Toaster } from "@/components/ui/toaster"
-import { useToast } from "@/components/ui/use-toast"
+} from "@/components/ui/alert-dialog";
 
 // Types pour les utilisateurs
-type UserRole = "admin" | "staff" | "manager" | "waiter" | "chef"
+type UserRole = "ROLE_ADMIN" | "ROLE_CUISINIER" | "ROLE_SERVEUR";
 
 interface User {
-  id: string
-  name: string
-  email: string
-  role: UserRole
-  createdAt: string
-  active: boolean
-  lastLogin?: string
+  id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  role: UserRole;
+  createdAt: string;
+  active: boolean;
+  lastLogin?: string;
 }
 
 export default function UsersManagementPage() {
-  const { toast } = useToast()
+  const { toast } = useToast();
+  const router = useRouter();
 
-  // État pour les utilisateurs (simulé)
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: "1",
-      name: "Jean Dupont",
-      email: "jean.dupont@bellaitalia.com",
-      role: "manager",
-      createdAt: "2025-01-15",
-      active: true,
-      lastLogin: "2025-05-13",
-    },
-    {
-      id: "2",
-      name: "Marie Laurent",
-      email: "marie.laurent@bellaitalia.com",
-      role: "waiter",
-      createdAt: "2025-02-20",
-      active: true,
-      lastLogin: "2025-05-14",
-    },
-    {
-      id: "3",
-      name: "Pierre Martin",
-      email: "pierre.martin@bellaitalia.com",
-      role: "chef",
-      createdAt: "2025-03-10",
-      active: true,
-      lastLogin: "2025-05-10",
-    },
-    {
-      id: "4",
-      name: "Sophie Dubois",
-      email: "sophie.dubois@bellaitalia.com",
-      role: "staff",
-      createdAt: "2025-04-05",
-      active: false,
-      lastLogin: "2025-04-28",
-    },
-  ])
-
-  // État pour le formulaire de création d'utilisateur
+  const [users, setUsers] = useState<User[]>([]);
   const [newUser, setNewUser] = useState({
-    name: "",
+    nom: "",
+    prenom: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "staff" as UserRole,
-  })
+    telephone: "",
+    role: "ROLE_SERVEUR" as UserRole,
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
-  // État pour le formulaire de modification d'utilisateur
-  const [editingUser, setEditingUser] = useState<User | null>(null)
-  const [editForm, setEditForm] = useState({
-    name: "",
-    email: "",
-    role: "" as UserRole,
-    active: true,
-  })
+  // Chargement des utilisateurs depuis le backend
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/api/users");
+      if (!response.ok) throw new Error("Erreur lors du chargement des utilisateurs");
+      const data = await response.json();
+      setUsers(data);
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de charger les utilisateurs.",
+        variant: "destructive",
+      });
+    }
+  };
 
-  // État pour la recherche
-  const [searchQuery, setSearchQuery] = useState("")
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  // État pour les dialogues
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [userToDelete, setUserToDelete] = useState<string | null>(null)
-
-  // État pour les onglets
-  const [activeTab, setActiveTab] = useState("all")
-
-  // Filtrer les utilisateurs en fonction de la recherche et de l'onglet actif
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchQuery.toLowerCase())
-
-    if (activeTab === "all") return matchesSearch
-    if (activeTab === "active") return matchesSearch && user.active
-    if (activeTab === "inactive") return matchesSearch && !user.active
-
-    return matchesSearch
-  })
-
-  // Gérer les changements dans le formulaire de création
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setNewUser((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setNewUser((prev) => ({ ...prev, [name]: value }));
+  };
 
-  // Gérer les changements dans le formulaire de modification
-  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setEditForm((prev) => ({ ...prev, [name]: value }))
-  }
-
-  // Gérer le changement de rôle
-  const handleRoleChange = (value: string) => {
-    setNewUser((prev) => ({ ...prev, role: value as UserRole }))
-  }
-
-  // Gérer le changement de rôle dans le formulaire de modification
-  const handleEditRoleChange = (value: string) => {
-    setEditForm((prev) => ({ ...prev, role: value as UserRole }))
-  }
-
-  // Créer un nouvel utilisateur
-  const handleCreateUser = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     // Validation simple
-    if (!newUser.name || !newUser.email || !newUser.password) {
+    if (!newUser.nom || !newUser.prenom || !newUser.email || !newUser.password || !newUser.telephone) {
       toast({
         title: "Erreur",
         description: "Veuillez remplir tous les champs obligatoires.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     if (newUser.password !== newUser.confirmPassword) {
@@ -175,458 +109,260 @@ export default function UsersManagementPage() {
         title: "Erreur",
         description: "Les mots de passe ne correspondent pas.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    // Vérifier si l'email existe déjà
-    if (users.some((user) => user.email === newUser.email)) {
+    try {
+      const response = await fetch("http://localhost:8080/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nom: newUser.nom,
+          prenom: newUser.prenom,
+          email: newUser.email,
+          password: newUser.password,
+          telephone: newUser.telephone,
+          roles: [newUser.role],
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Erreur lors de la création de l'utilisateur.");
+      }
+
+      // Mise à jour de la liste en relançant la requête
+      await fetchUsers();
+
+      // Réinitialiser le formulaire
+      setNewUser({
+        nom: "",
+        prenom: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        telephone: "",
+        role: "ROLE_SERVEUR",
+      });
+
+      // Afficher un message de succès
+      toast({
+        title: "Succès",
+        description: `${data.nom} ${data.prenom} a été ajouté avec succès.`,
+      });
+
+      // Fermer le popup création APRÈS l'affichage du toast
+      setIsCreateDialogOpen(false);
+    } catch (error: any) {
       toast({
         title: "Erreur",
-        description: "Cet email est déjà utilisé par un autre compte.",
+        description: error.message || "Impossible de créer l'utilisateur.",
         variant: "destructive",
-      })
-      return
+      });
+    } finally {
+      setIsCreateDialogOpen(false);
     }
+  };
 
-    // Simuler la création d'un utilisateur
-    const createdUser: User = {
-      id: (users.length + 1).toString(),
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      createdAt: new Date().toISOString().split("T")[0],
-      active: true,
-    }
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
 
-    // Ajouter l'utilisateur à la liste
-    setUsers((prev) => [...prev, createdUser])
+    try {
+      const response = await fetch(`http://localhost:8080/api/users/${userToDelete}`, {
+        method: "DELETE",
+      });
 
-    // Réinitialiser le formulaire
-    setNewUser({
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      role: "staff",
-    })
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Erreur lors de la suppression.");
+      }
 
-    // Fermer le dialogue
-    setIsCreateDialogOpen(false)
+      // Mise à jour de la liste après suppression
+      await fetchUsers();
 
-    // Afficher un message de succès
-    toast({
-      title: "Utilisateur créé",
-      description: `${createdUser.name} a été ajouté avec succès.`,
-    })
-  }
-
-  // Ouvrir le dialogue de modification
-  const handleOpenEditDialog = (user: User) => {
-    setEditingUser(user)
-    setEditForm({
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      active: user.active,
-    })
-    setIsEditDialogOpen(true)
-  }
-
-  // Modifier un utilisateur
-  const handleUpdateUser = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!editingUser) return
-
-    // Validation simple
-    if (!editForm.name || !editForm.email) {
+      toast({ title: "Supprimé", description: "L'utilisateur a été supprimé." });
+    } catch (error: any) {
       toast({
         title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires.",
+        description: error.message || "Impossible de supprimer l'utilisateur.",
         variant: "destructive",
-      })
-      return
+      });
+    } finally {
+      setUserToDelete(null);
+      setIsDeleteDialogOpen(false);
     }
+  };
 
-    // Vérifier si l'email existe déjà (sauf pour l'utilisateur en cours de modification)
-    if (users.some((user) => user.email === editForm.email && user.id !== editingUser.id)) {
-      toast({
-        title: "Erreur",
-        description: "Cet email est déjà utilisé par un autre compte.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    // Mettre à jour l'utilisateur
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === editingUser.id
-          ? { ...user, name: editForm.name, email: editForm.email, role: editForm.role, active: editForm.active }
-          : user,
-      ),
-    )
-
-    // Fermer le dialogue
-    setIsEditDialogOpen(false)
-    setEditingUser(null)
-
-    // Afficher un message de succès
-    toast({
-      title: "Utilisateur modifié",
-      description: `Les informations de ${editForm.name} ont été mises à jour.`,
-    })
-  }
-
-  // Ouvrir le dialogue de suppression
-  const handleOpenDeleteDialog = (userId: string) => {
-    setUserToDelete(userId)
-    setIsDeleteDialogOpen(true)
-  }
-
-  // Supprimer un utilisateur
-  const handleDeleteUser = () => {
-    if (!userToDelete) return
-
-    const userToDeleteName = users.find((user) => user.id === userToDelete)?.name
-
-    setUsers((prev) => prev.filter((user) => user.id !== userToDelete))
-
-    setIsDeleteDialogOpen(false)
-    setUserToDelete(null)
-
-    toast({
-      title: "Utilisateur supprimé",
-      description: `${userToDeleteName || "L'utilisateur"} a été supprimé avec succès.`,
-    })
-  }
-
-  // Basculer le statut actif d'un utilisateur
-  const toggleUserStatus = (userId: string) => {
-    setUsers((prev) => prev.map((user) => (user.id === userId ? { ...user, active: !user.active } : user)))
-
-    const user = users.find((user) => user.id === userId)
-    const newStatus = user ? !user.active : false
-
-    toast({
-      title: `Statut modifié`,
-      description: `L'utilisateur est maintenant ${newStatus ? "actif" : "inactif"}.`,
-    })
-  }
-
-  // Traduire le rôle en français
-  const translateRole = (role: UserRole) => {
-    const translations: Record<UserRole, string> = {
-      admin: "Administrateur",
-      manager: "Manager",
-      staff: "Personnel",
-      waiter: "Serveur",
-      chef: "Chef",
-    }
-    return translations[role] || role
-  }
+  const filteredUsers = users.filter((u) => {
+    const fullName = `${u.nom} ${u.prenom}`.toLowerCase();
+    return fullName.includes(searchQuery.toLowerCase());
+  });
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Gestion des Utilisateurs</h1>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-red-700 hover:bg-red-800">
-              <UserPlus className="mr-2 h-4 w-4" />
-              Nouvel Utilisateur
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Créer un nouvel utilisateur</DialogTitle>
-              <DialogDescription>
-                Remplissez les informations pour créer un nouveau compte utilisateur.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleCreateUser}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Nom
-                  </Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={newUser.name}
-                    onChange={handleInputChange}
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={newUser.email}
-                    onChange={handleInputChange}
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="password" className="text-right">
-                    Mot de passe
-                  </Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={newUser.password}
-                    onChange={handleInputChange}
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="confirmPassword" className="text-right">
-                    Confirmer
-                  </Label>
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    value={newUser.confirmPassword}
-                    onChange={handleInputChange}
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="role" className="text-right">
-                    Rôle
-                  </Label>
-                  <Select value={newUser.role} onValueChange={handleRoleChange}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Sélectionner un rôle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Administrateur</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="staff">Personnel</SelectItem>
-                      <SelectItem value="waiter">Serveur</SelectItem>
-                      <SelectItem value="chef">Chef</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit">Créer l'utilisateur</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
+    <div className="p-6 space-y-6">
+      <Toaster />
       <Card>
-        <CardHeader className="bg-gray-50">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <CardTitle>Liste des Utilisateurs</CardTitle>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
-                <TabsList>
-                  <TabsTrigger value="all">Tous</TabsTrigger>
-                  <TabsTrigger value="active">Actifs</TabsTrigger>
-                  <TabsTrigger value="inactive">Inactifs</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Gestion des utilisateurs</CardTitle>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <UserPlus className="mr-2 h-4 w-4" /> Ajouter
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Nouvel utilisateur</DialogTitle>
+                <DialogDescription>Remplissez les informations</DialogDescription>
+              </DialogHeader>
+              <form
+  onSubmit={(e) => {
+    e.preventDefault(); // très important pour éviter le rechargement de la page
+    handleCreateUser(e);
+    setIsCreateDialogOpen(false);
+  }}
+  className="space-y-2"
+>
                 <Input
-                  placeholder="Rechercher..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  name="nom"
+                  placeholder="Nom"
+                  onChange={handleInputChange}
+                  value={newUser.nom}
+                  required
                 />
-              </div>
-            </div>
-          </div>
+                <Input
+                  name="prenom"
+                  placeholder="Prénom"
+                  onChange={handleInputChange}
+                  value={newUser.prenom}
+                  required
+                />
+                <Input
+                  name="email"
+                  type="email"
+                  placeholder="Email"
+                  onChange={handleInputChange}
+                  value={newUser.email}
+                  required
+                />
+                <Input
+                  name="telephone"
+                  placeholder="Téléphone"
+                  onChange={handleInputChange}
+                  value={newUser.telephone}
+                  required
+                />
+                <Input
+                  name="password"
+                  type="password"
+                  placeholder="Mot de passe"
+                  onChange={handleInputChange}
+                  value={newUser.password}
+                  required
+                />
+                <Input
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Confirmer mot de passe"
+                  onChange={handleInputChange}
+                  value={newUser.confirmPassword}
+                  required
+                />
+                <Select
+                  value={newUser.role}
+                  onValueChange={(value) => setNewUser((prev) => ({ ...prev, role: value as UserRole }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Rôle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ROLE_ADMIN">Admin</SelectItem>
+                    <SelectItem value="ROLE_CUISINIER">Cuisinier</SelectItem>
+                    <SelectItem value="ROLE_SERVEUR">Serveur</SelectItem>
+                  </SelectContent>
+                </Select>
+                <DialogFooter>
+                  <Button type="submit">Créer</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
+          <div className="flex items-center gap-2 pb-4">
+            <Input
+              placeholder="Recherche..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Search className="h-4 w-4" />
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Nom</TableHead>
+                <TableHead>Prénom</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Rôle</TableHead>
-                <TableHead className="hidden md:table-cell">Date de création</TableHead>
-                <TableHead className="hidden md:table-cell">Dernière connexion</TableHead>
                 <TableHead>Statut</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize">
-                        {translateRole(user.role)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">{user.createdAt}</TableCell>
-                    <TableCell className="hidden md:table-cell">{user.lastLogin || "Jamais"}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        {user.active ? (
-                          <Badge
-                            className="bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer"
-                            onClick={() => toggleUserStatus(user.id)}
-                          >
-                            Actif
-                          </Badge>
-                        ) : (
-                          <Badge
-                            className="bg-gray-100 text-gray-800 hover:bg-gray-200 cursor-pointer"
-                            onClick={() => toggleUserStatus(user.id)}
-                          >
-                            Inactif
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(user)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteDialog(user.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-4">
-                    Aucun utilisateur trouvé
+              {filteredUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.nom}</TableCell>
+                  <TableCell>{user.prenom}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.role.replace("ROLE_", "")}</TableCell>
+                  <TableCell>
+                    {user.active ? (
+                      <Badge>Actif</Badge>
+                    ) : (
+                      <Badge variant="destructive">Inactif</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => {
+                        setUserToDelete(user.id);
+                        setIsDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
-              )}
+              ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* Dialogue de modification */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Modifier l'utilisateur</DialogTitle>
-            <DialogDescription>Modifiez les informations de l'utilisateur.</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleUpdateUser}>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-name" className="text-right">
-                  Nom
-                </Label>
-                <Input
-                  id="edit-name"
-                  name="name"
-                  value={editForm.name}
-                  onChange={handleEditInputChange}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-email" className="text-right">
-                  Email
-                </Label>
-                <Input
-                  id="edit-email"
-                  name="email"
-                  type="email"
-                  value={editForm.email}
-                  onChange={handleEditInputChange}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-role" className="text-right">
-                  Rôle
-                </Label>
-                <Select value={editForm.role} onValueChange={handleEditRoleChange}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Sélectionner un rôle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Administrateur</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="staff">Personnel</SelectItem>
-                    <SelectItem value="waiter">Serveur</SelectItem>
-                    <SelectItem value="chef">Chef</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-status" className="text-right">
-                  Statut
-                </Label>
-                <div className="col-span-3 flex items-center space-x-2">
-                  <Button
-                    type="button"
-                    variant={editForm.active ? "default" : "outline"}
-                    size="sm"
-                    className={editForm.active ? "bg-green-600 hover:bg-green-700" : ""}
-                    onClick={() => setEditForm((prev) => ({ ...prev, active: true }))}
-                  >
-                    <Check className="mr-1 h-4 w-4" />
-                    Actif
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={!editForm.active ? "default" : "outline"}
-                    size="sm"
-                    className={!editForm.active ? "bg-gray-600 hover:bg-gray-700" : ""}
-                    onClick={() => setEditForm((prev) => ({ ...prev, active: false }))}
-                  >
-                    <X className="mr-1 h-4 w-4" />
-                    Inactif
-                  </Button>
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit">Enregistrer les modifications</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialogue de confirmation de suppression */}
+      {/* Dialog de confirmation suppression */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action ne peut pas être annulée. Cela supprimera définitivement le compte utilisateur et toutes les
-              données associées.
-            </AlertDialogDescription>
+            <AlertDialogTitle>Supprimer l'utilisateur ?</AlertDialogTitle>
+            <AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteUser} className="bg-red-600 hover:bg-red-700">
-              Supprimer
-            </AlertDialogAction>
+            <AlertDialogCancel
+              onClick={() => {
+                setUserToDelete(null);
+                setIsDeleteDialogOpen(false);
+              }}
+            >
+              Annuler
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser}>Supprimer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <Toaster />
     </div>
-  )
+  );
 }
