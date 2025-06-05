@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { MoreVertical, Trash2, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -19,130 +19,108 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
 
-// Types pour les commandes
-type OrderStatus = "new" | "on_cook" | "completed" | "cancelled"
-type OrderType = "dine_in" | "takeaway"
+// Types pour les commandes basés sur votre API
+type OrderStatus = "à cuisiner" | "en préparation" | "prête" | "annulée"
+type PaymentStatus = "a payée" | "en attente" | "refusée"
 
 interface OrderItem {
-  id: string
-  name: string
-  quantity: number
-  price: number
+  id: number
+  quantite: number
+  menu: null | {
+    id: number
+    nom: string
+    prix: number
+    imageUrl: string
+  }
+  plat: null | {
+    id: number
+    nom: string
+    description: string | null
+    prix: number
+    imageUrl: string
+  }
+  boisson: null | {
+    id: number
+    nom: string
+    prix: number
+    imageUrl: string
+  }
+  dessert: null | {
+    id: number
+    nom: string
+    prix: number
+    imageUrl: string
+  }
 }
 
 interface Order {
-  id: string
-  orderNumber: string
-  tableNumber?: string
-  items: OrderItem[]
-  totalItems: number
-  totalPrice: number
-  status: OrderStatus
-  notes?: string
-  type: OrderType
-  createdAt: string
+  id: number
+  statutPreparation: OrderStatus
+  statutPaiement: PaymentStatus
+  lignesCommande: OrderItem[]
 }
 
 // Fonction pour formater le prix
 const formatPrice = (price: number) => {
-  return `${price.toFixed(2)}$`
+  return `${price.toFixed(2)}€`
+}
+
+// Fonction pour calculer le total d'une commande
+const calculateOrderTotal = (order: Order) => {
+  return order.lignesCommande.reduce((total, item) => {
+    if (item.plat) return total + (item.plat.prix * item.quantite)
+    if (item.menu) return total + (item.menu.prix * item.quantite)
+    if (item.boisson) return total + (item.boisson.prix * item.quantite)
+    if (item.dessert) return total + (item.dessert.prix * item.quantite)
+    return total
+  }, 0)
 }
 
 // Fonction pour traduire le statut
 const translateStatus = (status: OrderStatus) => {
   const statusMap: Record<OrderStatus, { label: string; className: string }> = {
-    new: { label: "New Order", className: "bg-blue-100 text-blue-800" },
-    on_cook: { label: "On Cook", className: "bg-orange-100 text-orange-800" },
-    completed: { label: "Complete", className: "bg-green-100 text-green-800" },
-    cancelled: { label: "Cancelled", className: "bg-red-100 text-red-800" },
+    "à cuisiner": { label: "À cuisiner", className: "bg-blue-100 text-blue-800" },
+    "en préparation": { label: "En préparation", className: "bg-orange-100 text-orange-800" },
+    "prête": { label: "Prête", className: "bg-green-100 text-green-800" },
+    "annulée": { label: "Annulée", className: "bg-red-100 text-red-800" },
   }
   return statusMap[status]
 }
 
 export default function OrdersPage() {
   const { toast } = useToast()
-  const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+  const today = new Date().toLocaleDateString("fr-FR", { month: "long", day: "numeric", year: "numeric" })
 
-  // État pour les commandes (simulé)
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      id: "1",
-      orderNumber: "0045",
-      tableNumber: "16",
-      items: [
-        { id: "1", name: "Margherita Pizza", quantity: 2, price: 12.99 },
-        { id: "2", name: "Extra cheese", quantity: 1, price: 2.5 },
-      ],
-      totalItems: 7,
-      totalPrice: 166.99,
-      status: "new",
-      notes: "Extra cheese sur la margherita",
-      type: "dine_in",
-      createdAt: "2025-06-10",
-    },
-    {
-      id: "2",
-      orderNumber: "0056",
-      tableNumber: "09",
-      items: [
-        { id: "3", name: "Carbonara", quantity: 1, price: 14.99 },
-        { id: "4", name: "Tiramisu", quantity: 1, price: 6.99 },
-      ],
-      totalItems: 4,
-      totalPrice: 52.99,
-      status: "cancelled",
-      type: "dine_in",
-      createdAt: "2025-06-10",
-    },
-    {
-      id: "3",
-      orderNumber: "0049",
-      tableNumber: "24",
-      items: [{ id: "5", name: "Veggie Supreme", quantity: 1, price: 15.99 }],
-      totalItems: 2,
-      totalPrice: 30,
-      status: "on_cook",
-      notes: "peanuts allergies",
-      type: "dine_in",
-      createdAt: "2025-06-10",
-    },
-    {
-      id: "4",
-      orderNumber: "0945",
-      tableNumber: "26",
-      items: [
-        { id: "6", name: "Veggie Supreme", quantity: 2, price: 24.99 },
-        { id: "7", name: "Margherita (16 inch)", quantity: 1, price: 29.0 },
-        { id: "8", name: "BBQ Chicken", quantity: 2, price: 32.99 },
-        { id: "9", name: "California Pizza", quantity: 2, price: 19.99 },
-      ],
-      totalItems: 7,
-      totalPrice: 102,
-      status: "completed",
-      type: "dine_in",
-      createdAt: "2025-06-10",
-    },
-    {
-      id: "5",
-      orderNumber: "0046",
-      items: [
-        { id: "10", name: "Margherita Pizza", quantity: 2, price: 12.99 },
-        { id: "11", name: "Extra cheese", quantity: 1, price: 2.5 },
-      ],
-      totalItems: 7,
-      totalPrice: 166.99,
-      status: "new",
-      notes: "Extra cheese sur la margherita",
-      type: "takeaway",
-      createdAt: "2025-06-10",
-    },
-  ])
+  // État pour les commandes
+  const [orders, setOrders] = useState<Order[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Charger les commandes depuis l'API
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/commandes")
+        if (!response.ok) {
+          throw new Error("Erreur lors du chargement des commandes")
+        }
+        const data = await response.json()
+        setOrders(data)
+      } catch (error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les commandes",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchOrders()
+  }, [toast])
 
   // État pour le filtre de statut actif
   const [activeStatusFilter, setActiveStatusFilter] = useState<"all" | OrderStatus>("all")
-
-  // État pour le type de commande actif (sur place ou à emporter)
-  const [activeOrderType, setActiveOrderType] = useState<OrderType>("dine_in")
 
   // État pour la commande sélectionnée
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
@@ -150,11 +128,10 @@ export default function OrdersPage() {
   // État pour le dialogue de détails de commande
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false)
 
-  // Filtrer les commandes en fonction du type et du statut
+  // Filtrer les commandes en fonction du statut
   const filteredOrders = orders.filter((order) => {
-    if (order.type !== activeOrderType) return false
     if (activeStatusFilter === "all") return true
-    return order.status === activeStatusFilter
+    return order.statutPreparation === activeStatusFilter
   })
 
   // Ouvrir le dialogue de détails de commande
@@ -164,355 +141,256 @@ export default function OrdersPage() {
   }
 
   // Changer le statut d'une commande
-  const handleChangeStatus = (orderId: string, newStatus: OrderStatus) => {
-    setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order)))
-
-    toast({
-      title: "Statut mis à jour",
-      description: `La commande #${orders.find((o) => o.id === orderId)?.orderNumber} est maintenant ${translateStatus(newStatus).label}`,
-    })
-  }
-
-  // Supprimer une commande
-  const handleDeleteOrder = (orderId: string) => {
-    if (confirm("Êtes-vous sûr de vouloir supprimer cette commande ?")) {
-      const orderToDelete = orders.find((o) => o.id === orderId)
-      setOrders((prev) => prev.filter((order) => order.id !== orderId))
+  const handleChangeStatus = async (orderId: number, newStatus: OrderStatus) => {
+    try {
+      // Ici vous devriez faire une requête PUT vers votre API pour mettre à jour le statut
+      // Pour l'exemple, nous mettons à jour localement
+      setOrders((prev) => prev.map((order) => 
+        order.id === orderId ? { ...order, statutPreparation: newStatus } : order
+      ))
 
       toast({
-        title: "Commande supprimée",
-        description: `La commande #${orderToDelete?.orderNumber} a été supprimée avec succès.`,
+        title: "Statut mis à jour",
+        description: `La commande #${orderId} est maintenant ${translateStatus(newStatus).label}`,
+      })
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut",
+        variant: "destructive",
       })
     }
   }
 
-  // Calculer le sous-total, la taxe et le total pour une commande
-  const calculateOrderTotals = (order: Order) => {
-    const subtotal = order.items.reduce((acc, item) => acc + item.price * item.quantity, 0)
-    const tax = subtotal * 0.25 // 25% de taxe (exemple)
-    const total = subtotal + tax
-    return { subtotal, tax, total }
+  // Supprimer une commande
+  const handleDeleteOrder = async (orderId: number) => {
+    if (confirm("Êtes-vous sûr de vouloir supprimer cette commande ?")) {
+      try {
+        // Ici vous devriez faire une requête DELETE vers votre API
+        // Pour l'exemple, nous supprimons localement
+        setOrders((prev) => prev.filter((order) => order.id !== orderId))
+
+        toast({
+          title: "Commande supprimée",
+          description: `La commande #${orderId} a été supprimée avec succès.`,
+        })
+      } catch (error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de supprimer la commande",
+          variant: "destructive",
+        })
+      }
+    }
+  }
+
+  // Calculer le nombre total d'articles dans une commande
+  const calculateTotalItems = (order: Order) => {
+    return order.lignesCommande.reduce((total, item) => total + item.quantite, 0)
+  }
+
+  // Obtenir le nom d'un article
+  const getItemName = (item: OrderItem) => {
+    if (item.plat) return item.plat.nom
+    if (item.menu) return item.menu.nom
+    if (item.boisson) return item.boisson.nom
+    if (item.dessert) return item.dessert.nom
+    return "Article inconnu"
+  }
+
+  // Obtenir le prix d'un article
+  const getItemPrice = (item: OrderItem) => {
+    if (item.plat) return item.plat.prix
+    if (item.menu) return item.menu.prix
+    if (item.boisson) return item.boisson.prix
+    if (item.dessert) return item.dessert.prix
+    return 0
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-6 flex justify-center">
+        <p>Chargement des commandes...</p>
+      </div>
+    )
   }
 
   return (
     <div className="container mx-auto py-6">
-      <Tabs defaultValue="dine_in" onValueChange={(value) => setActiveOrderType(value as OrderType)}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold mb-2">
-              {activeOrderType === "dine_in" ? "Order List" : "TakeAway Orders"}
-            </h1>
-            <p className="text-gray-500">{today}</p>
-          </div>
-          <TabsList className="mt-4 md:mt-0">
-            <TabsTrigger value="dine_in">Order List</TabsTrigger>
-            <TabsTrigger value="takeaway">TakeAway Orders</TabsTrigger>
-          </TabsList>
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold mb-2">Liste des commandes</h1>
+          <p className="text-gray-500">{today}</p>
         </div>
+      </div>
 
-        <TabsContent value="dine_in" className="space-y-4">
-          <Card>
-            <CardHeader className="bg-gray-50 pb-4">
-              <div className="flex justify-between items-center">
-                <CardTitle>Commandes sur place</CardTitle>
-                <div className="flex space-x-2">
-                  <Button
-                    variant={activeStatusFilter === "all" ? "default" : "outline"}
-                    onClick={() => setActiveStatusFilter("all")}
-                    className="relative"
+      <Card>
+        <CardHeader className="bg-gray-50 pb-4">
+          <div className="flex justify-between items-center">
+            <CardTitle>Commandes en cours</CardTitle>
+            <div className="flex space-x-2">
+              <Button
+                variant={activeStatusFilter === "all" ? "default" : "outline"}
+                onClick={() => setActiveStatusFilter("all")}
+                className="relative"
+              >
+                Toutes
+                <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
+                  {orders.length}
+                </span>
+              </Button>
+              <Button
+                variant={activeStatusFilter === "à cuisiner" ? "default" : "outline"}
+                onClick={() => setActiveStatusFilter("à cuisiner")}
+                className="relative"
+              >
+                À cuisiner
+                <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
+                  {orders.filter((o) => o.statutPreparation === "à cuisiner").length}
+                </span>
+              </Button>
+              <Button
+                variant={activeStatusFilter === "en préparation" ? "default" : "outline"}
+                onClick={() => setActiveStatusFilter("en préparation")}
+                className="relative"
+              >
+                En préparation
+                <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
+                  {orders.filter((o) => o.statutPreparation === "en préparation").length}
+                </span>
+              </Button>
+              <Button
+                variant={activeStatusFilter === "prête" ? "default" : "outline"}
+                onClick={() => setActiveStatusFilter("prête")}
+                className="relative"
+              >
+                Prêtes
+                <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
+                  {orders.filter((o) => o.statutPreparation === "prête").length}
+                </span>
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">ID</TableHead>
+                <TableHead className="w-[300px]">Articles</TableHead>
+                <TableHead>Nombre d'articles</TableHead>
+                <TableHead>Prix total</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Paiement</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredOrders.length > 0 ? (
+                filteredOrders.map((order) => (
+                  <TableRow
+                    key={order.id}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleOpenOrderDetails(order)}
                   >
-                    All
-                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
-                      {orders.filter((o) => o.type === "dine_in").length}
-                    </span>
-                  </Button>
-                  <Button
-                    variant={activeStatusFilter === "new" ? "default" : "outline"}
-                    onClick={() => setActiveStatusFilter("new")}
-                    className="relative"
-                  >
-                    New Orders
-                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
-                      {orders.filter((o) => o.type === "dine_in" && o.status === "new").length}
-                    </span>
-                  </Button>
-                  <Button
-                    variant={activeStatusFilter === "on_cook" ? "default" : "outline"}
-                    onClick={() => setActiveStatusFilter("on_cook")}
-                    className="relative"
-                  >
-                    On Cook
-                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
-                      {orders.filter((o) => o.type === "dine_in" && o.status === "on_cook").length}
-                    </span>
-                  </Button>
-                  <Button
-                    variant={activeStatusFilter === "completed" ? "default" : "outline"}
-                    onClick={() => setActiveStatusFilter("completed")}
-                    className="relative"
-                  >
-                    Completed
-                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
-                      {orders.filter((o) => o.type === "dine_in" && o.status === "completed").length}
-                    </span>
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[200px]">Order Line</TableHead>
-                    <TableHead className="w-[300px]">Notes</TableHead>
-                    <TableHead>Number of items</TableHead>
-                    <TableHead>Total price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+                    <TableCell>
+                      <div className="font-medium">#{order.id}</div>
+                    </TableCell>
+                    <TableCell>
+                      {order.lignesCommande.slice(0, 2).map((item) => (
+                        <div key={item.id}>
+                          {item.quantite}x {getItemName(item)}
+                        </div>
+                      ))}
+                      {order.lignesCommande.length > 2 && (
+                        <div className="text-sm text-gray-500">
+                          +{order.lignesCommande.length - 2} autres articles
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>{calculateTotalItems(order)}</TableCell>
+                    <TableCell>{formatPrice(calculateOrderTotal(order))}</TableCell>
+                    <TableCell>
+                      <Badge className={translateStatus(order.statutPreparation).className}>
+                        {translateStatus(order.statutPreparation).label}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={
+                        order.statutPaiement === "a payée" 
+                          ? "bg-green-100 text-green-800" 
+                          : order.statutPaiement === "en attente"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                      }>
+                        {order.statutPaiement}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleChangeStatus(order.id, "à cuisiner")
+                            }}
+                          >
+                            Marquer comme À cuisiner
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleChangeStatus(order.id, "en préparation")
+                            }}
+                          >
+                            Marquer comme En préparation
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleChangeStatus(order.id, "prête")
+                            }}
+                          >
+                            Marquer comme Prête
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleChangeStatus(order.id, "annulée")
+                            }}
+                          >
+                            Marquer comme Annulée
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteOrder(order.id)
+                            }}
+                            className="text-red-600"
+                          >
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOrders.length > 0 ? (
-                    filteredOrders.map((order) => (
-                      <TableRow
-                        key={order.id}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleOpenOrderDetails(order)}
-                      >
-                        <TableCell>
-                          <div className="bg-gray-100 p-2 rounded inline-block">
-                            <div className="font-medium">Table {order.tableNumber}</div>
-                            <div className="text-xs text-gray-500">Order #{order.orderNumber}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{order.notes || "-"}</TableCell>
-                        <TableCell>{order.totalItems}</TableCell>
-                        <TableCell>{formatPrice(order.totalPrice)}</TableCell>
-                        <TableCell>
-                          <Badge className={translateStatus(order.status).className}>
-                            {translateStatus(order.status).label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleChangeStatus(order.id, "new")
-                                }}
-                              >
-                                Marquer comme Nouvelle
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleChangeStatus(order.id, "on_cook")
-                                }}
-                              >
-                                Marquer comme En Cuisine
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleChangeStatus(order.id, "completed")
-                                }}
-                              >
-                                Marquer comme Terminée
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleChangeStatus(order.id, "cancelled")
-                                }}
-                              >
-                                Marquer comme Annulée
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleDeleteOrder(order.id)
-                                }}
-                                className="text-red-600"
-                              >
-                                Supprimer
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-4">
-                        Aucune commande trouvée
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="takeaway" className="space-y-4">
-          <Card>
-            <CardHeader className="bg-gray-50 pb-4">
-              <div className="flex justify-between items-center">
-                <CardTitle>Commandes à emporter</CardTitle>
-                <div className="flex space-x-2">
-                  <Button
-                    variant={activeStatusFilter === "all" ? "default" : "outline"}
-                    onClick={() => setActiveStatusFilter("all")}
-                    className="relative"
-                  >
-                    All
-                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
-                      {orders.filter((o) => o.type === "takeaway").length}
-                    </span>
-                  </Button>
-                  <Button
-                    variant={activeStatusFilter === "new" ? "default" : "outline"}
-                    onClick={() => setActiveStatusFilter("new")}
-                    className="relative"
-                  >
-                    New Orders
-                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
-                      {orders.filter((o) => o.type === "takeaway" && o.status === "new").length}
-                    </span>
-                  </Button>
-                  <Button
-                    variant={activeStatusFilter === "on_cook" ? "default" : "outline"}
-                    onClick={() => setActiveStatusFilter("on_cook")}
-                    className="relative"
-                  >
-                    On Cook
-                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
-                      {orders.filter((o) => o.type === "takeaway" && o.status === "on_cook").length}
-                    </span>
-                  </Button>
-                  <Button
-                    variant={activeStatusFilter === "completed" ? "default" : "outline"}
-                    onClick={() => setActiveStatusFilter("completed")}
-                    className="relative"
-                  >
-                    Completed
-                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] text-white">
-                      {orders.filter((o) => o.type === "takeaway" && o.status === "completed").length}
-                    </span>
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[200px]">Order Line</TableHead>
-                    <TableHead className="w-[300px]">Notes</TableHead>
-                    <TableHead>Number of items</TableHead>
-                    <TableHead>Total price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOrders.length > 0 ? (
-                    filteredOrders.map((order) => (
-                      <TableRow
-                        key={order.id}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleOpenOrderDetails(order)}
-                      >
-                        <TableCell>
-                          <div className="bg-gray-100 p-2 rounded inline-block">
-                            <div className="font-medium">
-                              <ShoppingBag className="h-4 w-4 inline-block mr-1" />
-                              Takeaway
-                            </div>
-                            <div className="text-xs text-gray-500">Order #{order.orderNumber}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{order.notes || "-"}</TableCell>
-                        <TableCell>{order.totalItems}</TableCell>
-                        <TableCell>{formatPrice(order.totalPrice)}</TableCell>
-                        <TableCell>
-                          <Badge className={translateStatus(order.status).className}>
-                            {translateStatus(order.status).label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleChangeStatus(order.id, "new")
-                                }}
-                              >
-                                Marquer comme Nouvelle
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleChangeStatus(order.id, "on_cook")
-                                }}
-                              >
-                                Marquer comme En Cuisine
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleChangeStatus(order.id, "completed")
-                                }}
-                              >
-                                Marquer comme Terminée
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleChangeStatus(order.id, "cancelled")
-                                }}
-                              >
-                                Marquer comme Annulée
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleDeleteOrder(order.id)
-                                }}
-                                className="text-red-600"
-                              >
-                                Supprimer
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-4">
-                        Aucune commande trouvée
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-4">
+                    Aucune commande trouvée
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {/* Dialogue de détails de commande */}
       {selectedOrder && (
@@ -520,25 +398,25 @@ export default function OrdersPage() {
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle className="flex justify-between items-center">
-                <span>
-                  {selectedOrder.type === "dine_in" ? `Table No #${selectedOrder.tableNumber}` : "Commande à emporter"}
-                </span>
+                <span>Commande #{selectedOrder.id}</span>
                 <Button variant="outline" size="icon" onClick={() => setIsOrderDetailsOpen(false)}>
                   <Trash2 className="h-4 w-4 text-red-500" />
                 </Button>
               </DialogTitle>
-              <DialogDescription>Order #{selectedOrder.orderNumber}</DialogDescription>
+              <DialogDescription>
+                Statut: {translateStatus(selectedOrder.statutPreparation).label}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <h3 className="font-medium mb-2">Ordered Items ({selectedOrder.items.length})</h3>
+                <h3 className="font-medium mb-2">Articles commandés ({selectedOrder.lignesCommande.length})</h3>
                 <div className="space-y-2">
-                  {selectedOrder.items.map((item) => (
+                  {selectedOrder.lignesCommande.map((item) => (
                     <div key={item.id} className="flex justify-between">
                       <span>
-                        {item.quantity}x {item.name}
+                        {item.quantite}x {getItemName(item)}
                       </span>
-                      <span>${item.price.toFixed(2)}</span>
+                      <span>{getItemPrice(item) * item.quantite}€</span>
                     </div>
                   ))}
                 </div>
@@ -547,19 +425,11 @@ export default function OrdersPage() {
               <Separator />
 
               <div>
-                <h3 className="font-medium mb-2">Payment Summary</h3>
+                <h3 className="font-medium mb-2">Récapitulatif</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>${calculateOrderTotals(selectedOrder).subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax</span>
-                    <span>${calculateOrderTotals(selectedOrder).tax.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Donation for disable people</span>
-                    <span>$5.99</span>
+                    <span>Total articles</span>
+                    <span>{calculateOrderTotal(selectedOrder)}€</span>
                   </div>
                 </div>
               </div>
@@ -568,7 +438,7 @@ export default function OrdersPage() {
 
               <div className="flex justify-between font-bold">
                 <span>Total</span>
-                <span>${calculateOrderTotals(selectedOrder).total.toFixed(2)}</span>
+                <span>{calculateOrderTotal(selectedOrder)}€</span>
               </div>
             </div>
             <DialogFooter className="flex justify-between">
@@ -577,45 +447,45 @@ export default function OrdersPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    handleChangeStatus(selectedOrder.id, "new")
+                    handleChangeStatus(selectedOrder.id, "à cuisiner")
                     setIsOrderDetailsOpen(false)
                   }}
                   className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                 >
-                  New
+                  À cuisiner
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    handleChangeStatus(selectedOrder.id, "on_cook")
+                    handleChangeStatus(selectedOrder.id, "en préparation")
                     setIsOrderDetailsOpen(false)
                   }}
                   className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
                 >
-                  On Cook
+                  En préparation
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    handleChangeStatus(selectedOrder.id, "completed")
+                    handleChangeStatus(selectedOrder.id, "prête")
                     setIsOrderDetailsOpen(false)
                   }}
                   className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
                 >
-                  Complete
+                  Prête
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    handleChangeStatus(selectedOrder.id, "cancelled")
+                    handleChangeStatus(selectedOrder.id, "annulée")
                     setIsOrderDetailsOpen(false)
                   }}
                   className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
                 >
-                  Cancel
+                  Annuler
                 </Button>
               </div>
             </DialogFooter>
