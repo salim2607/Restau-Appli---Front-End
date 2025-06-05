@@ -1,5 +1,6 @@
 {
-  "/dashboard/take-order/page": "app/dashboard/take-order/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
+  "/page": "app/page.js",
+  "/dashboard/reservations/page": "app/dashboard/reservations/page.js",
+  "/dashboard/floor-plan/page": "app/dashboard/floor-plan/page.js",
   "/dashboard/orders/page": "app/dashboard/orders/page.js"
 }
