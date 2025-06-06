@@ -692,6 +692,9 @@ video {
 .top-1 {
   top: 0.25rem;
 }
+.top-\[65px\] {
+  top: 65px;
+}
 .z-10 {
   z-index: 10;
 }
@@ -920,6 +923,9 @@ video {
 }
 .h-\[500px\] {
   height: 500px;
+}
+.h-\[calc\(100vh-65px\)\] {
+  height: calc(100vh - 65px);
 }
 .max-h-96 {
   max-height: 24rem;

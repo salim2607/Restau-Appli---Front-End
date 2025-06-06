@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Check, Plus, X } from "lucide-react";
 
@@ -56,85 +56,73 @@ export default function ReservationsPage() {
       {/* Contenu principal */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Liste des réservations */}
-        <Card className="col-span-2">
-          <CardHeader>
-            <CardTitle>Réservations à venir</CardTitle>
-            <CardDescription>Gérez les réservations de vos clients.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <p>Chargement des réservations...</p>
-            ) : error ? (
-              <p className="text-red-500">{error}</p>
-            ) : filteredReservations.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Heure</TableHead>
-                    <TableHead>Personnes</TableHead>
-                    <TableHead>Table</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+        <CardContent>
+          {loading ? (
+            <p>Chargement des réservations...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : filteredReservations.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Heure</TableHead>
+                  <TableHead>Personnes</TableHead>
+                  <TableHead>Table</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredReservations.map((reservation) => (
+                  <TableRow key={reservation.id}>
+                    <TableCell className="font-medium">{reservation.nomClient}</TableCell>
+                    <TableCell>{reservation.email}</TableCell>
+                    <TableCell>{new Date(reservation.dateHeure).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(reservation.dateHeure).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</TableCell>
+                    <TableCell>{reservation.nombrePersonnes}</TableCell>
+                    <TableCell>{reservation.numeroTable || "Non attribuée"}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" size="icon">
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="icon">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredReservations.map((reservation) => (
-                    <TableRow key={reservation.id}>
-                      <TableCell className="font-medium">{reservation.nomClient}</TableCell>
-                      <TableCell>{reservation.email}</TableCell>
-                      <TableCell>{new Date(reservation.dateHeure).toLocaleDateString()}</TableCell>
-                      <TableCell>{new Date(reservation.dateHeure).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</TableCell>
-                      <TableCell>{reservation.nombrePersonnes}</TableCell>
-                      <TableCell>{reservation.numeroTable || "Non attribuée"}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="icon">
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="icon">
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <p>Aucune réservation trouvée.</p>
-            )}
-          </CardContent>
-        </Card>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p>Aucune réservation trouvée.</p>
+          )}
+        </CardContent>
 
         {/* Calendrier */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Calendrier</CardTitle>
-            <CardDescription>Visualisez les réservations par date.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <label htmlFor="date" className="block text-sm font-medium">
-                Sélectionnez une date
-              </label>
-              <input
-                type="date"
-                id="date"
-                name="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-2"
-              />
-              <p className="text-sm text-muted-foreground">
-                {selectedDate
-                  ? `Réservations pour le ${new Date(selectedDate).toLocaleDateString()}`
-                  : "Toutes les réservations"}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <CardContent>
+          <div className="space-y-4">
+            <label htmlFor="date" className="block text-sm font-medium">
+              Sélectionnez une date
+            </label>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-2"
+            />
+            <p className="text-sm text-muted-foreground">
+              {selectedDate
+                ? `Réservations pour le ${new Date(selectedDate).toLocaleDateString()}`
+                : "Toutes les réservations"}
+            </p>
+          </div>
+        </CardContent>
       </div>
     </div>
   );

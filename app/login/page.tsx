@@ -31,18 +31,33 @@ export default function LoginPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Échec de la connexion. Vérifiez vos identifiants.");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Échec de la connexion. Vérifiez vos identifiants.");
       }
 
       const data = await response.json();
+      console.log(data);
 
-      // Stocker le token ou gérer la session si nécessaire
-      console.log("Connexion réussie :", data);
+      // Stocker les données utilisateur
+      localStorage.setItem("userData", JSON.stringify({
+        token: data.token,
+        email: data.email,
+        roles: data.roles
+      }));
 
-      // Rediriger vers le tableau de bord
-      router.push("/dashboard");
+      // Redirection basée sur le rôle
+      if (data.roles.includes("ROLE_ADMIN")) {
+        router.push("/dashboard");
+      } else if (data.roles.includes("ROLE_CUISINIER")) {
+        router.push("/dashboard/orders");
+      } else if (data.roles.includes("ROLE_SERVEUR")) {
+        router.push("/dashboard/take-order");
+      } else {
+        router.push("/dashboard");
+      }
+
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue.");
+      setError(err.message || "Une erreur est survenue lors de la connexion.");
     } finally {
       setLoading(false);
     }
@@ -50,7 +65,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      {/* Section Formulaire de Connexion */}
+      {/* Section Formulaire */}
       <div className="flex flex-1 items-center justify-center p-6 md:p-10">
         <div className="w-full max-w-md space-y-8">
           <div className="space-y-2 text-center md:text-left">
@@ -74,9 +89,9 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Mot de passe</Label>
-                <a href="#" className="text-xs text-gray-500 hover:text-primary">
+                <Link href="/forgot-password" className="text-xs text-gray-500 hover:text-primary">
                   Mot de passe oublié ?
-                </a>
+                </Link>
               </div>
               <Input
                 id="password"
@@ -115,7 +130,7 @@ export default function LoginPage() {
       <div className="relative flex-1 h-64 md:h-auto">
         <Image
           src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image_restau-10nJ27w6Gs5js8IjGpAWA7ZHjgD0WJ.webp"
-          alt="Cozy restaurant interior with warm lighting, wooden tables and brick walls"
+          alt="Restaurant"
           fill
           className="object-cover rounded-t-2xl md:rounded-t-none md:rounded-r-2xl"
           priority
@@ -124,4 +139,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

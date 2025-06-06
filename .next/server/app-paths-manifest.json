@@ -1,7 +1,9 @@
 {
-  "/reservation/page": "app/reservation/page.js",
-  "/dashboard/orders/page": "app/dashboard/orders/page.js",
+  "/login/page": "app/login/page.js",
+  "/dashboard/users/page": "app/dashboard/users/page.js",
   "/dashboard/page": "app/dashboard/page.js",
   "/dashboard/take-order/page": "app/dashboard/take-order/page.js",
-  "/dashboard/reservations/page": "app/dashboard/reservations/page.js"
+  "/dashboard/reservations/page": "app/dashboard/reservations/page.js",
+  "/dashboard/orders/page": "app/dashboard/orders/page.js",
+  "/dashboard/floor-plan/page": "app/dashboard/floor-plan/page.js"
 }
