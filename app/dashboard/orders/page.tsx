@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { MoreVertical, Trash2, ShoppingBag } from "lucide-react"
+import { MoreVertical, Trash2, ShoppingBag, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -138,6 +138,38 @@ export default function OrdersPage() {
   const handleOpenOrderDetails = (order: Order) => {
     setSelectedOrder(order)
     setIsOrderDetailsOpen(true)
+  }
+
+  // Télécharger la facture au format PDF
+  const handleDownloadInvoice = async (orderId: number) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/paiement/facture/${orderId}`, {
+        method: "GET",
+      })
+
+      if (!response.ok) {
+        throw new Error("Erreur lors du téléchargement de la facture.")
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `facture-${orderId}.pdf`
+      link.click()
+      window.URL.revokeObjectURL(url)
+
+      toast({
+        title: "Facture téléchargée",
+        description: `La facture pour la commande #${orderId} a été téléchargée avec succès.`,
+      })
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de télécharger la facture.",
+        variant: "destructive",
+      })
+    }
   }
 
   // Changer le statut d'une commande
@@ -488,6 +520,15 @@ export default function OrdersPage() {
                   Annuler
                 </Button>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDownloadInvoice(selectedOrder.id)}
+                className="bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Télécharger la facture
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
