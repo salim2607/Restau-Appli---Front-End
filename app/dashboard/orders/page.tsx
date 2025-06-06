@@ -440,28 +440,37 @@ export default function OrdersPage() {
       {/* Dialogue de détails de commande */}
       {selectedOrder && (
         <Dialog open={isOrderDetailsOpen} onOpenChange={setIsOrderDetailsOpen}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[600px] bg-white rounded-lg shadow-lg">
             <DialogHeader>
-              <DialogTitle className="flex justify-between items-center">
+              <DialogTitle className="flex justify-between items-center text-lg font-bold text-gray-800">
                 <span>Commande #{selectedOrder.id}</span>
-                <Button variant="outline" size="icon" onClick={() => setIsOrderDetailsOpen(false)}>
-                  <Trash2 className="h-4 w-4 text-red-500" />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsOrderDetailsOpen(false)}
+                  className="hover:bg-red-100"
+                >
+                  <Trash2 className="h-5 w-5 text-red-500" />
                 </Button>
               </DialogTitle>
-              <DialogDescription>
-                Statut: {translateStatus(selectedOrder.statutPreparation).label}
+              <DialogDescription className="text-sm text-gray-600">
+                Statut: <Badge className={translateStatus(selectedOrder.statutPreparation).className}>
+                  {translateStatus(selectedOrder.statutPreparation).label}
+                </Badge>
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+
+            <div className="space-y-6">
+              {/* Articles commandés */}
               <div>
-                <h3 className="font-medium mb-2">Articles commandés ({selectedOrder.lignesCommande.length})</h3>
-                <div className="space-y-2">
+                <h3 className="text-base font-semibold text-gray-700 mb-3">Articles commandés ({selectedOrder.lignesCommande.length})</h3>
+                <div className="space-y-2 border rounded-md p-4 bg-gray-50">
                   {selectedOrder.lignesCommande.map((item) => (
-                    <div key={item.id} className="flex justify-between">
+                    <div key={item.id} className="flex justify-between text-sm text-gray-700">
                       <span>
                         {item.quantite}x {getItemName(item)}
                       </span>
-                      <span>{getItemPrice(item) * item.quantite}€</span>
+                      <span className="font-medium">{getItemPrice(item) * item.quantite}€</span>
                     </div>
                   ))}
                 </div>
@@ -469,80 +478,121 @@ export default function OrdersPage() {
 
               <Separator />
 
+              {/* Récapitulatif */}
               <div>
-                <h3 className="font-medium mb-2">Récapitulatif</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
+                <h3 className="text-base font-semibold text-gray-700 mb-3">Récapitulatif</h3>
+                <div className="space-y-2 border rounded-md p-4 bg-gray-50">
+                  <div className="flex justify-between text-sm text-gray-700">
                     <span>Total articles</span>
-                    <span>{calculateOrderTotal(selectedOrder)}€</span>
+                    <span className="font-medium">{calculateOrderTotal(selectedOrder)}€</span>
                   </div>
                 </div>
               </div>
 
               <Separator />
 
-              <div className="flex justify-between font-bold">
-                <span>Total</span>
-                <span>{calculateOrderTotal(selectedOrder)}€</span>
-              </div>
-            </div>
-            <DialogFooter className="flex justify-between">
-              <div className="flex space-x-2">
+              {/* Actions */}
+              <div className="flex flex-col space-y-4">
+                <div className="flex justify-between space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      handleChangeStatus(selectedOrder.id, "à cuisiner");
+                      setIsOrderDetailsOpen(false);
+                    }}
+                    className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                  >
+                    À cuisiner
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      handleChangeStatus(selectedOrder.id, "en préparation");
+                      setIsOrderDetailsOpen(false);
+                    }}
+                    className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+                  >
+                    En préparation
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      handleChangeStatus(selectedOrder.id, "prête");
+                      setIsOrderDetailsOpen(false);
+                    }}
+                    className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                  >
+                    Prête
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      handleChangeStatus(selectedOrder.id, "annulée");
+                      setIsOrderDetailsOpen(false);
+                    }}
+                    className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                  >
+                    Annuler
+                  </Button>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    handleChangeStatus(selectedOrder.id, "à cuisiner")
-                    setIsOrderDetailsOpen(false)
-                  }}
-                  className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                  onClick={() => handleDownloadInvoice(selectedOrder.id)}
+                  className="bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
                 >
-                  À cuisiner
+                  <Download className="h-4 w-4 mr-2" />
+                  Télécharger la facture
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    handleChangeStatus(selectedOrder.id, "en préparation")
-                    setIsOrderDetailsOpen(false)
-                  }}
-                  className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
-                >
-                  En préparation
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    handleChangeStatus(selectedOrder.id, "prête")
-                    setIsOrderDetailsOpen(false)
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`http://localhost:8080/api/paiement/carte?commandeId=${selectedOrder.id}`, {
+                        method: "POST", // Changement de PUT à POST
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                      });
+
+                      console.log(await response.text()); // Affiche la réponse brute
+
+                      if (!response.ok) {
+                        throw new Error("Erreur lors de la mise à jour du statut de paiement.");
+                      }
+
+                      // Mettre à jour localement le statut de paiement
+                      setOrders((prev) =>
+                        prev.map((order) =>
+                          order.id === selectedOrder.id ? { ...order, statutPaiement: "a payée" } : order
+                        )
+                      );
+
+                      toast({
+                        title: "Statut de paiement mis à jour",
+                        description: `La commande #${selectedOrder.id} est maintenant marquée comme payée.`,
+                      });
+
+                      setIsOrderDetailsOpen(false);
+                    } catch (error) {
+                      toast({
+                        title: "Erreur",
+                        description: "Impossible de mettre à jour le statut de paiement.",
+                        variant: "destructive",
+                      });
+                    }
                   }}
                   className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
                 >
-                  Prête
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    handleChangeStatus(selectedOrder.id, "annulée")
-                    setIsOrderDetailsOpen(false)
-                  }}
-                  className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
-                >
-                  Annuler
+                  Marquer comme payée
                 </Button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDownloadInvoice(selectedOrder.id)}
-                className="bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Télécharger la facture
-              </Button>
-            </DialogFooter>
+            </div>
           </DialogContent>
         </Dialog>
       )}
