@@ -1,9 +1,8 @@
 {
-  "/login/page": "app/login/page.js",
-  "/dashboard/users/page": "app/dashboard/users/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/menu/page": "app/menu/page.js",
+  "/page": "app/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/take-order/page": "app/dashboard/take-order/page.js",
-  "/dashboard/reservations/page": "app/dashboard/reservations/page.js",
   "/dashboard/orders/page": "app/dashboard/orders/page.js",
-  "/dashboard/floor-plan/page": "app/dashboard/floor-plan/page.js"
+  "/dashboard/take-order/page": "app/dashboard/take-order/page.js"
 }
