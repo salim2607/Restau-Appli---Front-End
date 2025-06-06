@@ -175,24 +175,37 @@ export default function OrdersPage() {
   // Changer le statut d'une commande
   const handleChangeStatus = async (orderId: number, newStatus: OrderStatus) => {
     try {
-      // Ici vous devriez faire une requête PUT vers votre API pour mettre à jour le statut
-      // Pour l'exemple, nous mettons à jour localement
-      setOrders((prev) => prev.map((order) => 
-        order.id === orderId ? { ...order, statutPreparation: newStatus } : order
-      ))
+      const response = await fetch(`http://localhost:8080/api/commandes/${orderId}/preparation`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ statutPreparation: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de la mise à jour du statut.");
+      }
+
+      // Mettre à jour localement le statut de la commande
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId ? { ...order, statutPreparation: newStatus } : order
+        )
+      );
 
       toast({
         title: "Statut mis à jour",
-        description: `La commande #${orderId} est maintenant ${translateStatus(newStatus).label}`,
-      })
+        description: `La commande #${orderId} est maintenant ${translateStatus(newStatus).label}.`,
+      });
     } catch (error) {
       toast({
         title: "Erreur",
-        description: "Impossible de mettre à jour le statut",
+        description: "Impossible de mettre à jour le statut.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   // Supprimer une commande
   const handleDeleteOrder = async (orderId: number) => {
